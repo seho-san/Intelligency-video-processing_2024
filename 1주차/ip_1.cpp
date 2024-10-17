@@ -12,7 +12,6 @@ typedef struct {
 	int r, g, b; //.
 }int_rgb;
 
-
 int** IntAlloc2(int height, int width)
 {
 	int** tmp;
@@ -20,17 +19,14 @@ int** IntAlloc2(int height, int width)
 	for (int i = 0; i < height; i++)
 		tmp[i] = (int*)calloc(width, sizeof(int));
 	return(tmp);
-
 }
 
 void IntFree2(int** image, int height, int width)
 {
 	for (int i = 0; i < height; i++)
 		free(image[i]);
-
 	free(image);
 }
-
 
 float** FloatAlloc2(int height, int width)
 {
@@ -61,7 +57,6 @@ void IntColorFree2(int_rgb** image, int height, int width)
 {
 	for (int i = 0; i < height; i++)
 		free(image[i]);
-
 	free(image);
 }
 
@@ -86,10 +81,8 @@ void WriteImage(char* name, int** image, int height, int width)
 	for (int i = 0; i < height; i++)
 		for (int j = 0; j < width; j++)
 			img.at<unsigned char>(i, j) = (unsigned char)image[i][j];
-
 	imwrite(name, img);
 }
-
 
 void ImageShow(char* winname, int** image, int height, int width)
 {
@@ -392,8 +385,6 @@ void ex0924_2()
  }
 
  //매크로
-
-
 #define NUM 300
 
 void ex0924_3() {
@@ -518,7 +509,6 @@ void Stretch1(int** img, int** img_out, int a, int height, int width) {
 	}
 }
 
-
 void Stretch2(
 	int a, int b, int c, int d,
 	int** img, int** img_out, int height, int width) {
@@ -526,7 +516,8 @@ void Stretch2(
 		for (int x = 0; x < width; x++) {
 			if (img[y][x] <= a) {
 				img_out[y][x] = ((float)c / a) * img[y][x] + 0.5;
-				//(float)(255.0 / a) 이런식으로 하면 정수나온다 나온답에 실수를 붙이는 거기 때문에. 안하는   게 좋다.   
+				//(float)(255.0 / a) 이런식으로 하면 정수나온다 
+				// 나온답에 실수를 붙이는 거기 때문에. 안하는 게 좋다.   
 			}
 			else if (img[y][x] > a && img[y][x] < b) {
 				img_out[y][x] = ((float)d - c) / (b - a) * (img[y][x] - a) + c + 0.5;
@@ -750,4 +741,235 @@ void Ex1008_3() { //히스토그램 평활화
 	GetChistogram(height, width, img, chist); //누적 히스토그램 생성
 
 	Hist_Equalization(height, width, img, img_out, chist); //히스토그램 평활화
+}
+
+int getMean3x3(int y, int x, int** img) {
+	int sum = 0;
+	//평균필터 사이즈가 3*3일 때
+	for (int m = -1; m <= 1; m++) {
+		for (int n = -1; n <= 1; n++) {
+			sum += img[y + m][x + n]; //주변 3x3 픽셀의 합
+		}
+	}
+	return (int)(sum / 9.0 + 0.5);
+}
+
+void MeanFilter3x3(int** img, int height, int width, int** img_out) {
+	int x, y;
+	
+	for (y = 1; y < height - 1; y++) { //y는 1열 수평선
+		for (x = 1; x < width - 1; x++){  //x는 1행 수직선
+			//y=0, x=0일 때는 픽셀의 위치가 범위 밖이라서 에러가 난다.
+
+			img_out[y][x]=getMean3x3(y, x, img);
+			
+		}
+	}
+
+	for (x = 0; x < width; x++) img_out[y][x] = img[y][x];
+
+	y = height - 1;
+	for (x = 0; x < width; x++) img_out[y][x] = img[y][x];
+
+	x = 0;
+	for (y = 0; y < height; y++) img_out[y][x] = img[y][x];
+
+	x = width - 1;
+	for (y = 0; y < height; y++) img_out[y][x] = img[y][x];
+	//맨 위, 아래, 왼쪽, 오른쪽 테두리만 바로 안쪽 테두리에서 복사
+
+	/*if (x == 0 || x == width - 1 || y == 0 || y == height - 1) {
+		img_out[y][x] = img[y][x];
+	}*/
+
+	/*img_out[y][x] = (img[y - 1][x - 1] + img[y - 1][x] + img[y - 1][x + 1]
+		+ img[y][x - 1] + img[y][x] + img[y][x + 1]
+		+ img[y + 1][x - 1] + img[y + 1][x] + img[y + 1][x + 1]) / 9.0 + 0.5;*/
+
+	//y=0, x=0일 때는 픽셀의 위치가 범위 밖이라서 에러가 난다.
+	//메모리 액세스 위반이 발생한다.
+}
+
+int getMean5x5(int y, int x, int** img) {
+	int sum = 0;
+	for (int m = -2; m <= 2; m++) {
+		for (int n = -2; n <= 2; n++) {
+			sum += img[y + m][x + n]; //주변 5X5 픽셀의 합
+		}
+	}
+	return (int) (sum / 25.0 + 0.5);
+}
+
+void MeanFilter5x5(int** img, int height, int width, int** img_out) {
+	int x, y;
+
+	for (y = 2; y < height - 2; y++) { //y는 1열 수평선
+		for (x = 2; x < width - 2; x++) {  //x는 1행 수직선
+			//y=0, x=0일 때는 픽셀의 위치가 범위 밖이라서 에러가 난다.
+			//맨 위, 아래, 왼쪽, 오른쪽 테두리만 바로 안쪽 테두리에서 복사
+			img_out[y][x] = getMean5x5(y, x, img);
+		}
+		/*if (x == 0 || x == width - 1 || y == 0 || y == height - 1) {
+				img_out[y][x] = img[y][x];
+			}*/
+	}
+	for (y = 0; y < 2; y++) {
+		for (x = 0; x < width; x++) img_out[y][x] = img[y][x];
+	}
+
+	for (y = height - 2; y < height; y++) {
+		for (x = 0; x < width; x++) img_out[y][x] = img[y][x];
+	}
+
+	for (x = 0; x < 2; x++) {
+		for (y = 0; y < height; y++) img_out[y][x] = img[y][x];
+	}
+
+	for (x = width - 2; x < width; x++) {
+		for (y = 0; y < height; y++) img_out[y][x] = img[y][x];
+	}
+	//y=0, x=0일 때는 픽셀의 위치가 범위 밖이라서 에러가 난다.
+	//메모리 액세스 위반이 발생한다.
+}
+
+int getMean7x7(int y, int x, int** img) {
+	int sum = 0;
+	for (int m = -3; m <= 3; m++) {
+		for (int n = -3; n <= 3; n++) {
+			sum += img[y + m][x + n]; //주변 5X5 픽셀의 합
+		}
+	}
+	return (int)(sum / 49.0 + 0.5);
+}
+
+void MeanFilter7x7(int** img, int height, int width, int** img_out) {
+	int x, y;
+
+	for (y = 3; y < height - 3; y++) { //y는 1열 수평선
+		for (x = 3; x < width - 3; x++) {  //x는 1행 수직선
+			//y=0, x=0일 때는 픽셀의 위치가 범위 밖이라서 에러가 난다.
+			//맨 위, 아래, 왼쪽, 오른쪽 테두리만 바로 안쪽 테두리에서 복사
+			img_out[y][x] = getMean7x7(y, x, img);
+		}
+		/*if (x == 0 || x == width - 1 || y == 0 || y == height - 1) {
+				img_out[y][x] = img[y][x];
+			}*/
+	}
+	for (y = 0; y < 3; y++) {
+		for (x = 0; x < width; x++) img_out[y][x] = img[y][x];
+	}
+
+	for (y = height - 3; y < height; y++) {
+		for (x = 0; x < width; x++) img_out[y][x] = img[y][x];
+	}
+
+	for (x = 0; x < 3; x++) {
+		for (y = 0; y < height; y++) img_out[y][x] = img[y][x];
+	}
+
+	for (x = width - 3; x < width; x++) {
+		for (y = 0; y < height; y++) img_out[y][x] = img[y][x];
+	}
+	//y=0, x=0일 때는 픽셀의 위치가 범위 밖이라서 에러가 난다.
+	//메모리 액세스 위반이 발생한다.
+}
+	
+void ex1015_1() {
+	int height, width;
+	int** img = ReadImage((char*)"./TestImages/lena.png", &height, &width);
+	int** img_out3x3 = (int**)IntAlloc2(height, width);
+	int** img_out5x5 = (int**)IntAlloc2(height, width);
+	int** img_out7x7 = (int**)IntAlloc2(height, width);
+
+	MeanFilter3x3(img, height, width, img_out3x3);
+	MeanFilter5x5(img, height, width, img_out5x5);
+	MeanFilter7x7(img, height, width, img_out7x7);
+
+	ImageShow((char*)"input", img, height, width);
+	ImageShow((char*)"output3x3", img_out3x3, height, width);
+	ImageShow((char*)"output5x5", img_out5x5, height, width);
+	ImageShow((char*)"output7x7", img_out7x7, height, width);
+}
+
+int getMeanNxN(int N, int y, int x, int** img) {
+	int delta = (N - 1) / 2;
+
+	int sum = 0;
+	for (int m = -delta; m <= delta; m++) {
+		for (int n = -delta; n <= delta; n++) {
+			sum += img[y + m][x + n];
+		}
+	}
+	return (int)((float)sum / (N*N) + 0.5); 
+}
+
+void MeanFilterNxN(int N, int** img, int height, int width, int** img_out) {
+	int delta = (N - 1) / 2; //일반화
+	int x, y;
+
+	for (y = delta; y < height - delta; y++) { //y는 1열 수평선
+		for (x = delta; x < width - delta; x++) {  //x는 1행 수직선
+			//y=0, x=0일 때는 픽셀의 위치가 범위 밖이라서 에러가 난다.
+			//맨 위, 아래, 왼쪽, 오른쪽 테두리만 바로 안쪽 테두리에서 복사
+			img_out[y][x] = getMeanNxN(N, y, x, img);
+		}
+		/*if (x == 0 || x == width - 1 || y == 0 || y == height - 1) {
+				img_out[y][x] = img[y][x];
+			}*/
+	}
+	for (y = 0; y < delta; y++) {
+		for (x = 0; x < width; x++) img_out[y][x] = img[y][x];
+	}
+
+	for (y = height - delta; y < height; y++) {
+		for (x = 0; x < width; x++) img_out[y][x] = img[y][x];
+	}
+
+	for (x = 0; x < delta; x++) {
+		for (y = 0; y < height; y++) img_out[y][x] = img[y][x];
+	}
+
+	for (x = width - delta; x < width; x++) {
+		for (y = 0; y < height; y++) img_out[y][x] = img[y][x];
+	}
+	//y=0, x=0일 때는 픽셀의 위치가 범위 밖이라서 에러가 난다.
+	//메모리 액세스 위반이 발생한다.
+}
+
+void ex1016_1() {
+	int height, width;
+	int** img = ReadImage((char*)"./TestImages/lena.png", &height, &width);
+	int** img_out = (int**)IntAlloc2(height, width);
+
+	ImageShow((char*)"input", img, height, width);
+
+	for (int N = 3; N < 15; N += 2) {
+		MeanFilterNxN(N, img, height, width, img_out);
+		ImageShow((char*)"output", img_out, height, width);
+	}
+}
+
+void main() {
+	int height, width;
+	int** img = ReadImage((char*)"./TestImages/lena.png", &height, &width);
+	int** img_out = (int**)IntAlloc2(height, width);
+	float** kernel = (float**)FloatAlloc2(3, 3);
+
+	kernel[0][0] = 1 / 9.0; kernel[0][1] = 1 / 9.0; kernel[0][2] = 1 / 9.0;
+	kernel[1][0] = 1 / 9.0; kernel[1][1] = 1 / 9.0; kernel[1][2] = 1 / 9.0;
+	kernel[2][0] = 1 / 9.0; kernel[2][1] = 1 / 9.0; kernel[2][2] = 1 / 9.0;
+
+	
+	int y = 100, x = 200;
+	float sum = 0;
+
+	for (int m = -1; m < 1; m++) {
+		for (int n = -1; n < 1; n++) {
+			sum += img[y + m][x + n] * kernel[m + 1][n + 1];
+		}
+	}
+	img_out[y][x] = sum + 0.5;
+
+	ImageShow((char*)"input", img, height, width);
+	ImageShow((char*)"output", img_out, height, width);
 }
