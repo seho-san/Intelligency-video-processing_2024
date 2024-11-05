@@ -9,7 +9,7 @@
 using namespace cv; //cv::쓸 때 cv:: 안써도 됨
 
 typedef struct {
-	int r, g, b; //.
+	int r, g, b;
 }int_rgb;
 
 int** IntAlloc2(int height, int width)
@@ -217,7 +217,7 @@ void DrawHistogram(char* comments, int* Hist)
 }
 
 int ex0903() {
-	Mat img=imread("anq.png");
+	Mat img = imread("anq.png");
 
 	imshow("test", img);
 	waitKey(0);
@@ -272,7 +272,7 @@ void ex0911_2() { //중간에 네모 만들기
 	for (x = 0; x < width; x++) {
 		for (y = 0; y < height; y++) {
 			if ((x > 256 && x < 768) && (y > 128 && y < 384)) { //조건문 다 성립할 때만 해당 픽셀값 255로 바꿈
-				img[y][x] = 255;
+				img[y][x] = 255; 
 			}
 		}
 	}
@@ -293,9 +293,10 @@ void ex0911_3() { //중간에 원 만들기
 	for (x = 0; x < width; x++)
 		for (y = 0; y < height; y++) {
 			if ((x - 512) * (x - 512) + (y - 256) * (y - 256) < 10000) //원의 방정식 x^2 + y^2 = r^2
-				//10000은 원의 반지름의 제곱(여기선 100^2)
-				img[y][x] = 255; //조건문 다 성립할 때만 해당 픽셀값 255로 바꿈
+			//10000은 원의 반지름의 제곱(여기선 100^2)
+			img[y][x] = 255; //조건문 다 성립할 때만 해당 픽셀값 255로 바꿈
 		}
+
 	WriteImage((char*)"test.jpg", img, height, width);
 	ImageShow((char*)"output", img, height, width); //내부에 imshow 함수가 있음
 	IntFree2(img, 256, 512); //메모리 해제
@@ -378,7 +379,8 @@ void ex0924_2()
 	 int** img_out = (int**)IntAlloc2(height, width);
 
 	 ShiftImage(50, img, height, width); 
-	 ClippingImage(img_out, img, height, width); 
+	 ClippingImage(img_out, img, height, width);
+
 	 
 	 ImageShow((char*)"input", img, height, width); 
 	 ImageShow((char*)"output", img_out, height, width);
@@ -397,14 +399,15 @@ void ex0924_3() {
 	 B = GetMin(bbb, 255); //B = ((bbb < 255) ? bbb : 255);
  }
 
+//중간값 구하는 매크로도 만들 수 있음
+#define GetMid(x, y, z) ((x > y) ? ((y > z) ? y : ((x > z) ? z : x)) : ((x > z) ? x : ((y > z) ? z : y)))
+
 void ex0925_1() {
 	 int A = 100, B = 200, C = 300;
 	 /*int D = GetMax(A, B);
 	 int E = GetMax(D, C);*/
 
 	 int E = GetMax(GetMax(A, B), C); //최댓값 구하는 매크로를 사용해 한 줄로 표현
-	 //중간값 구하는 매크로도 만들 수 있음
-	 //GetMid(x, y, z) ((x > y) ? ((y > z) ? y : ((x > z) ? z : x)) : ((x > z) ? x : ((y > z) ? z : y)));
  }
 
 int FindMaxValue(int** img, int height, int width) {
@@ -495,7 +498,8 @@ void Stretch1(int** img, int** img_out, int a, int height, int width) {
 	for (int y = 0; y < height; y++) {
 		for (int x = 0; x < width; x++) {
 			if (img[y][x] < a) {
-				img_out[y][x] = (255.0 / a) * img[y][x] + 0.5;//255.0은 실수형으로 나누기 위함
+				img_out[y][x] = (255.0 / a) * img[y][x] + 0.5;
+				//255.0은 실수형으로 나누기 위함
 				//255/a 앞에 (float) 넣어도 int 형으로 그대로 출력됨
 				//같은 괄호 안에 넣으면 캐스팅 가능
 				//255를 255.0으로 바꾸면 실수형으로 계산됨
@@ -529,6 +533,7 @@ void Stretch2(
 				img_out[y][x] = 255;
 			}
 		}
+
 	}
 }
 
@@ -546,7 +551,7 @@ void Stretch3(
 		for (int x = 0; x < width; x++) {
 			if (img[y][x] <= param.a) {
 				img_out[y][x] = ((float)param.c / param.a) * img[y][x] + 0.5;
-				//(float)(255.0 / a) 이런식으로 하면 정수나온다 나온답에 실수를 붙이는 거기 때문에. 안하는   게 좋다.   
+				//(float)(255.0 / a) 이런 식으로 하면 정수나온다 나온답에 실수를 붙이는 거기 때문에. 안하는 게 좋다.   
 			}
 			else if (img[y][x] > param.a && img[y][x] < param.b) {
 				img_out[y][x] = ((float)param.d - param.c) / (param.b - param.a) * (img[y][x] - param.a) + param.c + 0.5;
@@ -572,7 +577,7 @@ void Stretch4(ParameterAll param) {
 		for (int x = 0; x < param.width; x++) {
 			if (param.img[y][x] <= param.a) {
 				param.img_out[y][x] = ((float)param.c / param.a) * param.img[y][x] + 0.5;
-				//(float)(255.0 / a) 이런식으로 하면 정수나온다 나온답에 실수를 붙이는 거기 때문에. 안하는   게 좋다.   
+				//(float)(255.0 / a) 이런식으로 하면 정수나온다 나온답에 실수를 붙이는 거기 때문에. 안하는 게 좋다.   
 			}
 			else if (param.img[y][x] > param.a && param.img[y][x] < param.b) {
 				param.img_out[y][x] = ((float)param.d - param.c) / (param.b - param.a) * (param.img[y][x] - param.a) + param.c + 0.5;
@@ -674,7 +679,7 @@ void GetChistogram(int height, int width, int** img, int* chist) {
 
 	GetHistogram2(height, width, histogram, img); //히스토그램 생성
 
-	chist[0] = histogram[0];
+	chist[0] = histogram[0]; //누적 히스토그램
 	for (int n = 1; n < 256; n++) {
 		chist[n] = chist[n - 1] + histogram[n]; //n=1,2,...,255
 	}
@@ -720,7 +725,7 @@ void Hist_Equalization(int height, int width, int** img, int** img_out, int* chi
 	int hist_output[256] = { 0, };
 
 	GetHistogram2(height, width, hist_input, img); //input 히스토그램 생성
-	GetHistogram2(height, width, hist_output, img_out);//output 히스토그램 생성
+	GetHistogram2(height, width, hist_output, img_out); //output 히스토그램 생성
 
 	DrawHistogram((char*)"input_hist", hist_input);
 	DrawHistogram((char*)"output_hist", hist_output);
@@ -760,9 +765,7 @@ void MeanFilter3x3(int** img, int height, int width, int** img_out) {
 	for (y = 1; y < height - 1; y++) { //y는 1열 수평선
 		for (x = 1; x < width - 1; x++){  //x는 1행 수직선
 			//y=0, x=0일 때는 픽셀의 위치가 범위 밖이라서 에러가 난다.
-
-			img_out[y][x]=getMean3x3(y, x, img);
-			
+			img_out[y][x] = getMean3x3(y, x, img);
 		}
 	}
 
@@ -797,6 +800,7 @@ int getMean5x5(int y, int x, int** img) {
 			sum += img[y + m][x + n]; //주변 5X5 픽셀의 합
 		}
 	}
+	 
 	return (int) (sum / 25.0 + 0.5);
 }
 
@@ -846,7 +850,7 @@ void MeanFilter7x7(int** img, int height, int width, int** img_out) {
 	int x, y;
 
 	for (y = 3; y < height - 3; y++) { //y는 1열 수평선
-		for (x = 3; x < width - 3; x++) {  //x는 1행 수직선
+		for (x = 3; x < width - 3; x++) { //x는 1행 수직선
 			//y=0, x=0일 때는 픽셀의 위치가 범위 밖이라서 에러가 난다.
 			//맨 위, 아래, 왼쪽, 오른쪽 테두리만 바로 안쪽 테두리에서 복사
 			img_out[y][x] = getMean7x7(y, x, img);
@@ -936,6 +940,12 @@ void MeanFilterNxN(int N, int** img, int height, int width, int** img_out) {
 	//메모리 액세스 위반이 발생한다.
 }
 
+//중간고사
+// 
+//---------------------------------------------------------
+// 
+//기말고사
+
 void ex1016_1() {
 	int height, width;
 	int** img = ReadImage((char*)"./TestImages/lena.png", &height, &width);
@@ -949,7 +959,26 @@ void ex1016_1() {
 	}
 }
 
-void main() {
+int MaskingOne(int y, int x, float** kernel, int** img) {
+	float sum = 0;
+
+	for (int m = -1; m <= 1; m++) {
+		for (int n = -1; n <= 1; n++) {
+			sum += img[y + m][x + n] * kernel[m + 1][n + 1]; //마스킹 연산
+		}
+	}
+	return (int)(sum + 0.5);
+}
+
+void MaskingImage(int height, int width, int** img, float** kernel, int** img_out) {
+	for (int y = 1; y < height - 1; y++) {
+		for (int x = 1; x < width - 1; x++) {
+			img_out[y][x] = MaskingOne(y, x, kernel, img); //마스킹 연산
+		}
+	}
+}
+
+void ex1030() {
 	int height, width;
 	int** img = ReadImage((char*)"./TestImages/lena.png", &height, &width);
 	int** img_out = (int**)IntAlloc2(height, width);
@@ -959,17 +988,242 @@ void main() {
 	kernel[1][0] = 1 / 9.0; kernel[1][1] = 1 / 9.0; kernel[1][2] = 1 / 9.0;
 	kernel[2][0] = 1 / 9.0; kernel[2][1] = 1 / 9.0; kernel[2][2] = 1 / 9.0;
 
-	
-	int y = 100, x = 200;
-	float sum = 0;
-
-	for (int m = -1; m < 1; m++) {
-		for (int n = -1; n < 1; n++) {
-			sum += img[y + m][x + n] * kernel[m + 1][n + 1];
-		}
-	}
-	img_out[y][x] = sum + 0.5;
+	MaskingImage(height, width, img, kernel, img_out);
 
 	ImageShow((char*)"input", img, height, width);
 	ImageShow((char*)"output", img_out, height, width);
+}
+
+void MagGradient_X(int** img, int height, int width, int** img_out) {
+	for (int y = 0; y < height; y++) {
+		for (int x = 0; x < width-1; x++) {
+			img_out[y][x] = abs(img[y][x + 1] - img[y][x]); //x방향 기울기
+		}
+	}
+}
+
+void MagGradient_Y(int** img, int height, int width, int** img_out) {
+	for (int y = 0; y < height-1; y++) {
+		for (int x = 0; x < width; x++) {
+			img_out[y][x] = abs(img[y + 1][x] - img[y][x]); //y방향 기울기
+		}
+	}
+}
+
+void ScalingImage(float scale, int** img_in_out,int height, int width) {
+	for (int y = 0; y < height; y++) {
+		for (int x = 0; x < width - 1; x++) {
+			img_in_out[y][x] = scale * img_in_out[y][x];
+			if (img_in_out[y][x] > 255) {
+				img_in_out[y][x] = 255;
+			}
+			else if (img_in_out[y][x] < 0) {
+				img_in_out[y][x] = 0;
+			}
+		}
+	}
+}
+
+void ex1029_1() {
+	int height, width;
+	int** img = ReadImage((char*)"./TestImages/barbara.png", &height, &width);
+	int** img_out_x = (int**)IntAlloc2(height, width);
+	int** img_out_y = (int**)IntAlloc2(height, width);
+
+	int y = 200, x = 200;
+
+	MagGradient_X(img, height, width, img_out_x); //수평방향 그레디언트
+	MagGradient_Y(img, height, width, img_out_y); //수직방향 그레디언트
+	 
+	ScalingImage(4, img_out_x, height, width);//그레디언트 값이 너무 작아서 화면에 보이지 않음
+	ScalingImage(4, img_out_y, height, width);//따라서 그레디언트 값 4배로 증폭
+	
+	ImageShow((char*)"input", img, height, width);
+	ImageShow((char*)"output", img_out_x, height, width);
+	ImageShow((char*)"output", img_out_y, height, width);
+}
+
+void MagGradient_XY(int** img, int height, int width, int** img_out) { 
+	for (int y = 0; y < height - 1; y++) {
+		for (int x = 0; x < width - 1; x++) {
+			int fy = img[y][x + 1] - img[y][x]; //수직방향 그레디언트
+			int fx = img[y + 1][x] - img[y][x]; //수평방향 그레디언트
+			img_out[y][x] = abs(fx) + abs(fy); //그레디언트 크기
+		}
+	}
+}
+
+void ex1029_2() {
+	int height, width;
+	int** img = ReadImage((char*)"./TestImages/lena.png", &height, &width);
+	int** img_out = (int**)IntAlloc2(height, width);
+
+	MagGradient_XY(img, height, width, img_out);
+	ScalingImage(2, img_out, height, width);
+
+	ImageShow((char*)"input", img, height, width);
+	ImageShow((char*)"output", img_out, height, width);
+}
+
+void ex1030_2() {
+	int height, width;
+	int** img = ReadImage((char*)"./TestImages/lena.png", &height, &width);
+	int** img_out = (int**)IntAlloc2(height, width);
+	float** kernel = (float**)FloatAlloc2(3, 3);
+
+	kernel[0][0] = -1; kernel[0][1] = -1; kernel[0][2] = -1; //수직방향
+	kernel[1][0] = -1; kernel[1][1] = -8.0; kernel[1][2] = -1; 
+	kernel[2][0] = -1; kernel[2][1] = -1; kernel[2][2] = -1;
+
+	MaskingImage(height, width, img, kernel, img_out); //수직방향 마스킹
+	ClippingImage(img_out, img, height, width); //클리핑
+
+	ImageShow((char*)"input", img, height, width);
+	ImageShow((char*)"output", img_out, height, width);
+}
+
+void NormalizeImage(int** input, int height, int width, int** output) { 
+	int max_value = FindMaxValue(input, height, width); //최대값 찾기
+
+	for (int y = 0; y < height; y++)
+		for (int x = 0; x < width; x++) {
+			output[y][x] = (float)input[y][x] / max_value * 255; //정규화
+		}
+}
+
+void ex1030_3() {
+	int height, width;
+	int** img = ReadImage((char*)"./TestImages/lena.png", &height, &width);
+	int** img_out = (int**)IntAlloc2(height, width);
+
+	MagGradient_XY(img, height, width, img_out); 
+	
+	NormalizeImage(img_out, height, width, img_out);
+
+	ImageShow((char*)"input", img, height, width);
+	ImageShow((char*)"output", img_out, height, width);
+}
+
+//평균필터(LPF) : 이미지의 노이즈를 제거하는 필터
+
+//백색잡음(White Noise) : 모든 주파수를 가진 잡음
+//잡음 : 모든 주파수를 가지고 있는 신호
+//백색잡음은 모든 주파수에서 같은 에너지를 가진다
+
+void AbsImage(int** img_in, int height, int width, int** img_out) {
+	for (int y = 0; y < height; y++) {
+		for (int x = 0; x < width; x++) {
+			img_out[y][x] = abs(img_in[y][x]); //절대값
+		}
+	}
+}
+
+void ex1105_1() { //라플라시안	필터
+	int height, width;
+	int** img = ReadImage((char*)"./TestImages/lena.png", &height, &width);
+	int** img_out = (int**)IntAlloc2(height, width);
+	float** kernel = (float**)FloatAlloc2(3, 3);
+
+#if 0
+	kernel[0][0] = 0; kernel[0][1] = -1; kernel[0][2] = 0;
+	kernel[1][0] = -1; kernel[1][1] = 4.0; kernel[1][2] = -1;
+	kernel[2][0] = 0; kernel[2][1] = -1; kernel[2][2] = 0;
+
+#else
+	kernel[0][0] = -1.0; kernel[0][1] = -1.0; kernel[0][2] = -1.0;
+	kernel[1][0] = -1.0; kernel[1][1] = 8.0; kernel[1][2] = -1.0;
+	kernel[2][0] = -1.0; kernel[2][1] = -1.0; kernel[2][2] = -1.0;
+#endif
+
+	MaskingImage(height, width, img, kernel, img_out); //마스킹
+	AbsImage(img_out, height, width, img_out); //절대값(앞에 img_out이 input)
+	//ClippingImage(img_out, img_out, height, width); //클리핑
+	NormalizeImage(img_out, height, width, img_out); //정규화
+
+	ImageShow((char*)"input", img, height, width);
+	ImageShow((char*)"output", img_out, height, width);
+}
+
+void ex1105_2() { //소벨 필터
+	int height, width;
+	int** img = ReadImage((char*)"./TestImages/barbara.png", &height, &width);
+	int** img_out = (int**)IntAlloc2(height, width);
+	float** kernel = (float**)FloatAlloc2(3, 3);
+
+#if 0 //가로방향
+	kernel[0][0] = -1.0; kernel[0][1] = -2; kernel[0][2] = -1;
+	kernel[1][0] = 0; kernel[1][1] = 0; kernel[1][2] = 0;
+	kernel[2][0] = 1.0; kernel[2][1] = 2; kernel[2][2] = 1;
+
+#else //세로방향
+	kernel[0][0] = 1.0; kernel[0][1] = 0; kernel[0][2] = -1.0;
+	kernel[1][0] = 2; kernel[1][1] = 0; kernel[1][2] = -2.0;
+	kernel[2][0] = 1.0; kernel[2][1] = 0; kernel[2][2] = -1.0;
+#endif
+
+	MaskingImage(height, width, img, kernel, img_out); //마스킹
+	AbsImage(img_out, height, width, img_out); //절대값(앞에 img_out이 input)
+	//ClippingImage(img_out, img_out, height, width); //클리핑
+	NormalizeImage(img_out, height, width, img_out); //정규화
+
+	ImageShow((char*)"input", img, height, width);
+	ImageShow((char*)"output", img_out, height, width);
+}
+
+void MagSobel_X(int** img, int height, int width, int** img_out) {
+	float** kernel = (float**)FloatAlloc2(3, 3);
+
+	kernel[0][0] = -1.0; kernel[0][1] = -2; kernel[0][2] = -1;
+	kernel[1][0] = 0; kernel[1][1] = 0; kernel[1][2] = 0;
+	kernel[2][0] = 1.0; kernel[2][1] = 2; kernel[2][2] = 1;
+
+	MaskingImage(height, width, img, kernel, img_out); //마스킹
+	AbsImage(img_out, height, width, img_out); //절대값(앞에 img_out이 input)
+
+	FloatFree2(kernel, 3, 3);
+}
+
+void MagSobel_Y(int** img, int height, int width, int** img_out) {
+	float** kernel = (float**)FloatAlloc2(3, 3);
+
+	kernel[0][0] = -1.0; kernel[0][1] = 0; kernel[0][2] = 1.0;
+	kernel[1][0] = -2; kernel[1][1] = 0; kernel[1][2] = 2.0;
+	kernel[2][0] = -1.0; kernel[2][1] = 0; kernel[2][2] = 1.0;
+
+	MaskingImage(height, width, img, kernel, img_out); //마스킹
+	AbsImage(img_out, height, width, img_out); //절대값(앞에 img_out이 input)
+
+	FloatFree2(kernel, 3, 3); //메모리 해제 안 해주면 프로그램 죽음
+}
+
+void MagSobel_XY(int** img, int height, int width, int** img_out_xy) {
+	int** img_out_x = (int**)IntAlloc2(height, width);
+	int** img_out_y = (int**)IntAlloc2(height, width);
+
+	MagSobel_X(img, height, width, img_out_x); //수평방향 그레디언트
+	MagSobel_Y(img, height, width, img_out_y); //수직방향 그레디언트
+
+	for (int y = 0; y < height; y++)
+		for (int x = 0; x < width; x++) {
+			img_out_xy[y][x] = img_out_x[y][x] + img_out_y[y][x]; //x방향, y방향 그레디언트의 합
+		}
+	IntFree2(img_out_x, height, width);
+	IntFree2(img_out_y, height, width);
+}
+
+void ex1105_3() { //소벨 필터
+	int height, width;
+	int** img = ReadImage((char*)"./TestImages/barbara.png", &height, &width);
+	int** img_out_xy = (int**)IntAlloc2(height, width);
+
+	MagSobel_XY(img, height, width, img_out_xy);
+
+	NormalizeImage(img_out_xy, height, width, img_out_xy); //정규화
+
+	ImageShow((char*)"input", img, height, width);
+	ImageShow((char*)"output", img_out_xy, height, width);
+}
+
+void main() {
+	ex1105_3();
 }
