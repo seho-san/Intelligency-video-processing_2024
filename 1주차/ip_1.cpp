@@ -1224,6 +1224,414 @@ void ex1105_3() { //소벨 필터
 	ImageShow((char*)"output", img_out_xy, height, width);
 }
 
+void ex1106_1() { //선명화 처리
+	int height, width;
+	int** img = ReadImage((char*)"./TestImages/lena.png", &height, &width);
+	int** img_out = (int**)IntAlloc2(height, width);
+	float** kernel = (float**)FloatAlloc2(3, 3);
+
+#if 1
+	kernel[0][0] = 0; kernel[0][1] = -1; kernel[0][2] = 0;
+	kernel[1][0] = -1; kernel[1][1] = 5.0; kernel[1][2] = -1;
+	kernel[2][0] = 0; kernel[2][1] = -1; kernel[2][2] = 0;
+
+#else
+	kernel[0][0] = -1.0; kernel[0][1] = -1.0; kernel[0][2] = -1.0;
+	kernel[1][0] = -1.0; kernel[1][1] = 9.0; kernel[1][2] = -1.0;
+	kernel[2][0] = -1.0; kernel[2][1] = -1.0; kernel[2][2] = -1.0;
+#endif
+
+	MaskingImage(height, width, img, kernel, img_out); //마스킹
+	ClippingImage(img_out, img_out, height, width); //클리핑
+
+	ImageShow((char*)"input", img, height, width);
+	ImageShow((char*)"output", img_out, height, width);
+}
+
+void GetKernel_S1(float alpha, float** kernel) {
+	kernel[0][0] = 0; kernel[0][1] = -alpha; kernel[0][2] = 0;
+	kernel[1][0] = -alpha; kernel[1][1] = 1 + 4.0 * alpha; kernel[1][2] = -alpha;
+	kernel[2][0] = 0; kernel[2][1] = -alpha; kernel[2][2] = 0;
+}
+
+void GetKernel_S2(float alpha, float** kernel) {
+	kernel[0][0] = -alpha; kernel[0][1] = -alpha; kernel[0][2] = -alpha;
+	kernel[1][0] = -alpha; kernel[1][1] = 1 + 8.0 * alpha; kernel[1][2] = -alpha;
+	kernel[2][0] = -alpha; kernel[2][1] = -alpha; kernel[2][2] = -alpha;
+}
+
+void ex1106_2() { //선명화 - 2
+	int height, width;
+	int** img = ReadImage((char*)"./TestImages/lena.png", &height, &width);
+	int** img_out = (int**)IntAlloc2(height, width);
+	float** kernel = (float**)FloatAlloc2(3, 3);
+
+	float alpha = 0.5; //선명화 정도
+
+#if 0
+	GetKernel_S1(alpha, kernel);
+#else
+	GetKernel_S2(alpha, kernel);
+#endif
+
+	MaskingImage(height, width, img, kernel, img_out); //마스킹
+	ClippingImage(img_out, img_out, height, width); //클리핑
+
+	ImageShow((char*)"input", img, height, width);
+	ImageShow((char*)"output", img_out, height, width);
+}
+
+void ex1106_3() { //선명화 - 3
+	int height, width;
+	int** img = ReadImage((char*)"./TestImages/lena.png", &height, &width);
+	int** img_out = (int**)IntAlloc2(height, width);
+	float** kernel = (float**)FloatAlloc2(3, 3);
+
+	ImageShow((char*)"input", img, height, width);
+
+	for (float alpha = 0.1; alpha <= 1.0, alpha += 0.1;) {
+		GetKernel_S1(alpha, kernel);
+		MaskingImage(height, width, img, kernel, img_out); //마스킹
+		ClippingImage(img_out, img_out, height, width); //클리핑
+
+		ImageShow((char*)"output", img_out, height, width);
+	}
+}
+
+void Bubbling(int* data, int size) {
+	for (int i = 0; i < size - 1; i++) {
+		if (data[i] > data[i + 1]) {
+			int temp = data[i];
+			data[i] = data[i + 1];
+			data[i + 1] = temp;
+		}
+	}
+}
+
+void BubbleSort(int* data, int size) {
+	for (int n = 0; n < size - 1; n++) {
+		Bubbling(data, size - n);
+	}
+}
+
+#define SIZE 5
+void ex1106_4(){
+	int data[SIZE] = { 7,3,2,5,1 };
+	/*if (data[0] > data[1]) {
+		int temp = data[0];
+		data[0] = data[1];
+		data[1] = temp;
+	}
+	if (data[1] > data[2]) {
+		int temp = data[1];
+		data[1] = data[2];
+		data[2] = temp;
+	}*/
+	/*for (int i = 0; i < 5; i++)
+		for (int j = 0; j < 4; j++) {
+			if (data[j] > data[j + 1]) {
+				int temp = data[j];
+				data[j] = data[j + 1];
+				data[j + 1] = temp;
+			}
+		}*/
+	//Bubbling(data, SIZE);
+	////data[SIZE-1] : 최대값 --> 더 이상 비교할 필요가 없음
+	//Bubbling(data, SIZE - 1);
+	////data[SIZE-2] : 두 번째로 큰 값 --> 더 이상 비교할 필요가 없음
+	//Bubbling(data, SIZE - 2); 
+	////data[SIZE-3] : 세 번째로 큰 값 --> 더 이상 비교할 필요가 없음
+	//Bubbling(data, SIZE - 3);
+
+	BubbleSort(data, SIZE);
+}
+
+void GetBlock3x3(int y, int x, int** img, int* block1D) { //1차원 배열에 3x3 블록 복사
+	int index = 0;
+	for (int m = -1; m <= 1; m++) {
+		for (int n = -1; n <= 1; n++) {
+			block1D[index] = img[y + m][x + n];
+			index++;
+		}
+	}
+}
+
+void MedianFilter3x3(int** img, int height, int width, int** img_out) {
+	for (int y = 1; y < height - 1; y++) {
+		for (int x = 1; x < width - 1; x++) {
+			int block[9];
+			GetBlock3x3(y, x, img, block);
+			BubbleSort(block, 9);
+			img_out[y][x] = block[4]; //중간값
+		}
+	}
+}
+
+void CopyImage(int** src, int height, int width, int** dst) {
+	for (int y = 0; y < height; y++)
+		for (int x = 0; x < width; x++) {
+			dst[y][x] = src[y][x];
+		}
+}
+
+void ex1112_1() {
+	int height, width;
+	int** img = ReadImage((char*)"./TestImages/lenaSP20.png", &height, &width);
+	int** img_out = (int**)IntAlloc2(height, width);
+	int** img_out2 = (int**)IntAlloc2(height, width);
+	int** img_org = (int**)IntAlloc2(height, width);
+
+	//MedianFilter3x3(img, height, width, img_out); //중간값 필터
+	//
+	//MedianFilter3x3(img_out, height, width, img_out2); //중간값 필터를 두 번 적용
+
+	/*ImageShow((char*)"input", img, height, width);
+	ImageShow((char*)"output", img_out, height, width);
+	ImageShow((char*)"output2", img_out2, height, width);*/
+
+	//중간값 필터 n회 적용
+	//img->img_org copy
+	//img_out -> img copy
+	CopyImage(img, height, width, img_org);
+	for (int n = 0; n < 5; n++) {
+		MedianFilter3x3(img, height, width, img_out); //중간값 필터를 다섯 번 적용
+		CopyImage(img_out, height, width, img); //img_out -> img copy
+		ImageShow((char*)"output", img_out, height, width);
+		//너무 많이 돌리면 사진이 뭉개짐
+	}
+
+	ImageShow((char*)"input", img_org, height, width);
+	//ImageShow((char*)"output", img, height, width);
+	//ImageShow((char*)"output2", img_out, height, width);
+}
+
+void MaxFilter3x3(int** img, int height, int width, int** img_out) { //팽창	필터(dilate, dilation 필터)
+	for (int y = 1; y < height - 1; y++) {
+		for (int x = 1; x < width - 1; x++) {
+			int block[9];
+			GetBlock3x3(y, x, img, block);
+			BubbleSort(block, 9);
+			img_out[y][x] = block[8]; //최대값
+		}
+	}
+}
+
+void MinFilter3x3(int** img, int height, int width, int** img_out) { //침식 필터(erde, erosion 필터)
+	for (int y = 1; y < height - 1; y++) {
+		for (int x = 1; x < width - 1; x++) {
+			int block[9];
+			GetBlock3x3(y, x, img, block);
+			BubbleSort(block, 9);
+			img_out[y][x] = block[0]; //최대값
+		}
+	}
+}
+
+void ex1112_2() {
+	int height, width;
+	int** img = ReadImage((char*)"./TestImages/bin_numbers.bmp", &height, &width);
+	int** img_out = (int**)IntAlloc2(height, width);
+	int** img_out2 = (int**)IntAlloc2(height, width);
+	int** img_org = (int**)IntAlloc2(height, width);
+
+	CopyImage(img, height, width, img_org); //원본 이미지 저장
+
+	MaxFilter3x3(img, height, width, img_out); //팽창 필터
+	CopyImage(img_out, height, width, img); //img_out -> img copy
+	MaxFilter3x3(img, height, width, img_out); //팽창 필터 2번 적용
+
+	CopyImage(img_org, height, width, img); //원본 이미지 복사
+	MinFilter3x3(img, height, width, img_out2); //침식 필터
+	CopyImage(img_out2, height, width, img); //img_out2 -> img copy
+	MinFilter3x3(img, height, width, img_out2); //침식 필터 2번 적용
+
+	ImageShow((char*)"input", img_org, height, width);
+	ImageShow((char*)"output", img_out, height, width);
+	ImageShow((char*)"output2", img_out2, height, width);
+}
+
+void ex1112_3() {
+	int height, width;
+	int** img = ReadImage((char*)"./TestImages/bin_numbers.bmp", &height, &width);
+	int** img_out = (int**)IntAlloc2(height, width);
+	int** img_out2 = (int**)IntAlloc2(height, width);
+	int** img_org = (int**)IntAlloc2(height, width);
+
+	CopyImage(img, height, width, img_org); //원본 이미지 저장
+
+	MaxFilter3x3(img, height, width, img_out);
+	for (int y = 0; y < height; y++)
+		for (int x = 0; x < width; x++) {
+			img_out2[y][x] = img_out[y][x] - img[y][x]; //팽창 필터 - 원본 이미지
+		}
+
+	MinFilter3x3(img, height, width, img_out);
+
+	ImageShow((char*)"input", img_org, height, width);
+	ImageShow((char*)"output", img_out, height, width);
+	ImageShow((char*)"output2", img_out2, height, width);
+}
+
+void UpsamplingX2_0order(int** img, int height, int width, int** img_out) { //0차 보간
+	for (int y = 0; y < height; y++) {
+		for (int x = 0; x < width; x++) {
+			img_out[2 * y][2 * x] = img[y][x]; //단순 확장
+			img_out[2 * y][2 * x + 1] = img[y][x];
+			img_out[2 * y + 1][2 * x] = img[y][x];
+			img_out[2 * y + 1][2 * x + 1] = img[y][x];
+		}
+	}
+}
+
+void UpsamplingX2_1order(int** img, int height, int width, int** img_out) { //1차 보간
+	for (int y = 0; y < height; y++) { //(2y,2x) 자리 채운거
+		for (int x = 0; x < width; x++) {
+			img_out[2 * y][2 * x] = img[y][x]; //짝수자리 채우기
+		}
+	}
+	for (int y = 0; y < height; y++) { //(2y,2x+1)
+		for (int x = 0; x < width; x++) {
+			img_out[2 * y][2 * x + 1] = (img[y][x] + img[y][x + 1]) / 2.0 + 0.5;
+		}
+	}
+	for (int y = 0; y < height - 1; y++) { //(2y+1,2x)
+		for (int x = 0; x < width; x++) {
+			img_out[2 * y + 1][2 * x] = (img[y][x] + img[y + 1][x]) / 2.0 + 0.5; //짝수자리 채우기
+		}
+	}
+
+	int heightx2 = height * 2;
+	int widthx2 = width * 2;
+	for (int yp = 1; yp < heightx2; yp += 2) { //(2y+1,2x+1)
+		for (int xp = 1; xp < widthx2; xp += 2) {
+			img_out[yp][xp] = (img_out[yp][xp - 1] + img_out[yp][xp + 1]) / 2.0 + 0.5;
+		}
+	}
+}
+
+void ex1119_1() {
+	int height, width;
+	int** img = ReadImage((char*)"./TestImages/lena.png", &height, &width);
+	int heightx2 = height * 2;
+	int widthx2 = width * 2;
+	int** img_out_0 = (int**)IntAlloc2(heightx2, widthx2);
+	int** img_out_1 = (int**)IntAlloc2(heightx2, widthx2);
+
+	UpsamplingX2_0order(img, height, width, img_out_0);
+	//y축의 위아래 픽셀의 평균으로 빈 자리 채우기
+	//x축의 좌우 픽셀의 평균으로 빈 자리 채우기
+	
+	UpsamplingX2_1order(img, height, width, img_out_1); //가로세로 2배 큰 사진 출력
+
+	ImageShow((char*)"input", img, height, width);
+	ImageShow((char*)"output_0", img_out_0, heightx2, widthx2); //좀 자글자글하게 확대됨
+	ImageShow((char*)"output_1", img_out_1, heightx2, widthx2); //좀 스무스하게 확대됨
+}
+
+void DownSamplingX2(int** img, int height, int width, int** img_out) {
+	int half_height = height / 2;
+	int half_width = width / 2;
+
+	for (int y = 0; y < height / 2; y++) {
+		for (int x = 0; x < width / 2; x++) {
+			img_out[y][x] = img[2 * y][2 * x]; //단순 축소
+		}
+	}
+}
+
+void ex1119_2() {
+	int height, width;
+	int** img = ReadImage((char*)"./TestImages/lena.png", &height, &width);
+	int half_height = height / 2;
+	int half_width = width / 2;
+	int** img_out = (int**)IntAlloc2(half_height, half_width); 
+	int** img_out_1= (int**)IntAlloc2(half_height/2, half_width/2);
+
+	DownSamplingX2(img, height, width, img_out);
+	DownSamplingX2(img_out, half_height, half_width, img_out_1); //가로세로 1/4배 작은 사진 출력
+
+	ImageShow((char*)"input", img, height, width); 
+	ImageShow((char*)"output", img_out, half_height, half_width);
+	ImageShow((char*)"output", img_out_1, half_height/2, half_width/2);
+}
+
+void ex1119_3() {
+	int height, width;
+	int** img = ReadImage((char*)"./TestImages/zoneplate.png", &height, &width);
+	int half_height = height / 2;
+	int half_width = width / 2;
+	int** img_out = (int**)IntAlloc2(half_height, half_width);
+	int** img_out_1 = (int**)IntAlloc2(half_height / 2, half_width / 2);
+
+	int** img_mean = (int**)IntAlloc2(height, width);
+	MeanFilter3x3(img, height, width, img_mean);
+	DownSamplingX2(img_mean, height, width, img_out);
+
+	int** img_mean_h = (int**)IntAlloc2(half_height, half_width);
+	MeanFilter3x3(img_out, half_height, half_width, img_mean_h);
+	DownSamplingX2(img_mean_h, half_height, half_width, img_out_1); //가로세로 1/4배 작은 사진 출력
+
+	ImageShow((char*)"input", img, height, width);
+	ImageShow((char*)"output", img_out, half_height, half_width);
+	ImageShow((char*)"output", img_out_1, half_height / 2, half_width / 2);
+}
+
+int BilinearInterpolation(float y_f, float x_f, int** img, int height, int width) {
+	//예외처리 : 좌표 y_f, x_f가 이미지 범위를 벗어나는 경우 0을 리턴
+	int y = (int)y_f; //정수형으로 변환
+	int x = (int)x_f; //정수형으로 변환
+
+	if (y < 0 || x < 0 || x >= width - 1 || y >= height - 1)
+		return 0;
+	else {
+		int A = img[y][x];
+		int B = img[y][x + 1];
+		int C = img[y + 1][x];
+		int D = img[y + 1][x + 1];
+		float dx = x_f - x;
+		float dy = y_f - y;
+
+		int value = (1 - dx) * (1 - dy) * A + dx * (1 - dy) * B + (1 - dx) * dy * C + dx * dy * D + 0.5;
+		return value;
+	}
+}
+
+void ex1120_1() {
+	int height, width;
+	int** img = ReadImage((char*)"./TestImages/lena.png", &height, &width);
+	int heightx2 = height * 2;
+	int widthx2 = width * 2;
+	int** img_out = (int**)IntAlloc2(heightx2, widthx2);
+
+	//float y_f = 100.5, x_f = 200; //정수형으로 변환해서 소수점 날리기 = 좌표 구하기
+	//int value = BilinearInterpolation(y_f, x_f, img, height, width);
+	for (int yp = 0; yp < heightx2; yp++) {
+		for (int xp = 0; xp < widthx2; xp++) {
+			float y = yp / 2.0;  //0.5, 0.7, 1.2,...
+			float x = xp / 1.5;	 //0.5, 0.7, 1.2,...
+			img_out[yp][xp] = BilinearInterpolation(y, x, img, height, width);
+		}
+	}
+	ImageShow((char*)"input", img, height, width);
+	ImageShow((char*)"output", img_out, heightx2, widthx2);
+}
+
 void main() {
-	ex1105_3();
+	int height, width;
+	int** img = ReadImage((char*)"./TestImages/lena.png", &height, &width);
+	int** img_out = (int**)IntAlloc2(height, width);
+
+	double theta = 45.0;
+	theta = CV_PI / 180.0 * theta; //degree -> radian
+
+	for (int yp = 0; yp < height; yp++) {
+		for (int xp = 0; xp < width; xp++) {
+			float x = cos(theta) * xp + sin(theta) * yp; //theta : 라디안 값 들어가야 함
+			float y = -sin(theta) * xp + cos(theta	) * yp;
+			img_out[yp][xp] = BilinearInterpolation(y, x, img, height, width);
+		}
+	}
+
+	ImageShow((char*)"input", img, height, width);
+	ImageShow((char*)"output", img_out, height, width);
 }
