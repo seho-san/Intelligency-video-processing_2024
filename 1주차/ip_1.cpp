@@ -1616,22 +1616,230 @@ void ex1120_1() {
 	ImageShow((char*)"output", img_out, heightx2, widthx2);
 }
 
-void main() {
+void ex1120_2() { //원점 기준으로 회전(왼쪽 위 꼭짓점)
 	int height, width;
 	int** img = ReadImage((char*)"./TestImages/lena.png", &height, &width);
 	int** img_out = (int**)IntAlloc2(height, width);
 
-	double theta = 45.0;
+	double theta = 45.0; //회전각도
 	theta = CV_PI / 180.0 * theta; //degree -> radian
 
 	for (int yp = 0; yp < height; yp++) {
 		for (int xp = 0; xp < width; xp++) {
 			float x = cos(theta) * xp + sin(theta) * yp; //theta : 라디안 값 들어가야 함
-			float y = -sin(theta) * xp + cos(theta	) * yp;
-			img_out[yp][xp] = BilinearInterpolation(y, x, img, height, width);
+			float y = -sin(theta) * xp + cos(theta) * yp;
+			img_out[yp][xp] = BilinearInterpolation(y, x, img, height, width); //회전
 		}
 	}
 
 	ImageShow((char*)"input", img, height, width);
 	ImageShow((char*)"output", img_out, height, width);
+}
+
+void ex1126_1() { //중심 기준으로 회전
+	int height, width;
+	int** img = ReadImage((char*)"./TestImages/lena.png", &height, &width);
+	int** img_out = (int**)IntAlloc2(height, width);
+
+	double theta = 45.0; //회전각도
+	theta = CV_PI / 180.0 * theta; //degree -> radian
+	double ctheta = cos(theta);
+	double stheta = sin(theta);
+
+	int cx = width / 2; //중심점
+	int cy = height / 2;
+
+	float ratio = 1.6;
+	float alpha = 1.0 / ratio;
+
+	for (int yp = 0; yp < height; yp++) {
+		for (int xp = 0; xp < width; xp++) {
+			float x = alpha * ctheta * (xp - cx) + alpha * stheta * (yp - cy) + (cx); //theta : 라디안 값 들어가야 함
+			float y = alpha * -stheta * (xp - cx) + alpha * ctheta * (yp - cy) + cy;
+			img_out[yp][xp] = BilinearInterpolation(y, x, img, height, width); //회전
+		}
+	}
+
+	ImageShow((char*)"input", img, height, width);
+	ImageShow((char*)"output", img_out, height, width);
+}
+
+void ex1126_2() { //중심 기준으로 회전
+	int height, width;
+	int** img = ReadImage((char*)"./TestImages/lena.png", &height, &width);
+	int** img_out = (int**)IntAlloc2(height, width);
+
+	double a = 1, b = 0, c = 1, d = 1, tx = 0, ty = 0;
+	double det = a * d - b * c;
+	double ap = d / det;
+	double bp = -b / det;
+	double cp = -c / det;
+	double dp = a / det;
+
+	for (int yp = 0; yp < height; yp++) {
+		for (int xp = 0; xp < width; xp++) {
+			float x = ap * (xp - tx) + bp * (yp - ty); //theta : 라디안 값 들어가야 함
+			float y = cp * (xp - tx) + dp * (yp - ty);
+			img_out[yp][xp] = BilinearInterpolation(y, x, img, height, width); //회전
+		}
+	}
+
+	ImageShow((char*)"input", img, height, width);
+	ImageShow((char*)"output", img_out, height, width);
+}
+
+double MAD(int** img0, int** img1, int height, int width) { //Mean Absolute Difference
+	int sad = 0;
+	for (int y = 0; y < height; y++) {
+		for (int x = 0; x < width; x++) {
+			sad += abs(img0[y][x] - img1[y][x]); //차이의 절대값
+		}
+	}
+
+	double mad = (double)sad / (width * height);
+	return mad;
+}
+
+double MSE(int** img0, int** img1, int height, int width) { //Mean Square Error
+	int sse = 0;
+	for (int y = 0; y < height; y++) {
+		for (int x = 0; x < width; x++) {
+			sse += (img0[y][x] - img1[y][x]) * (img0[y][x] - img1[y][x]);
+		}
+	}
+
+	double mad = (double)sse / (width * height);
+	return mad;
+}
+
+void ex1126_3() { //이미지 유사도 측정
+	int height, width;
+	int** img0 = ReadImage((char*)"./TestImages/lena.png", &height, &width);
+	int** img1 = ReadImage((char*)"./TestImages/barbara.png", &height, &width);
+	int** img_out = (int**)IntAlloc2(height, width);
+
+	int y = 100, x = 200;
+	
+	double mad = MAD(img0, img1, height, width);
+	double mse = MSE(img0, img1, height, width);
+
+	printf("\nmad = %f", mad);
+	printf("\nmse = %f", mse);
+
+	/*ImageShow((char*)"input", img1, height, width);
+	ImageShow((char*)"output", img_out, height, width);*/
+}
+
+void ReadBlock(int** img, int yp, int xp, int** block_img, int by, int bx) {
+	//block_img[0][0] = img[yp][xp];
+	//block_img[0][1] = img[yp][xp + 1];
+	//block_img[1][0] = img[yp+1][xp];
+	//block_img[n][m] = img[yp + n][xp + m]; //n, m은 블록의 높이, 폭
+	//...
+	//block_img[by - 1][bx - 1] = img[yp + by - 1][xp + bx - 1]; //
+
+	for (int y = 0; y < by; y++) {
+		for (int x = 0; x < bx; x++) {
+			block_img[y][x] = img[yp + y][xp + x];
+		}
+	}
+}
+
+void ex1127_1() {
+	int height, width;
+	int** img = ReadImage((char*)"./TestImages/lena.png", &height, &width);
+	int bx, by; //블록의 높이, 폭
+	int** block = ReadImage((char*)"./TestImages/lena_template.png", &by, &bx); //템플릿 이미지
+	int** block_img = (int**)IntAlloc2(by, bx);
+	int** img_out = (int**)IntAlloc2(height, width);
+
+	int yp = 100, xp = 200; //검색 영역의 시작점
+
+	ReadBlock(img, yp, xp, block_img, by, bx); //블록 읽기
+	double mad = MAD(block, block_img, by, bx); //블록 매칭
+	printf("\nMAD(%d, %d) = %f", yp, xp, mad);
+
+	//ImageShow((char*)"input", img, height, width);
+	//ImageShow((char*)"output", img_out, height, width);
+}
+
+void DrawBox(int** img, int min_yp, int min_xp, int by, int bx) {
+	//어차피 blcok의 높이, 폭은 같으므로 by, bx로 대체 가능
+	//시작 좌표도 min_yp, min_xp로 대체 가능
+	//그럼 거기서부터 시작해서 by, bx만큼 그리면 됨
+	int x, y;
+	//세로 선
+	for (y = min_yp; y < min_yp + by; y++) {
+		img[y][min_xp] = 255;
+		img[y][min_xp + bx] = 255;
+	}
+	//가로 선
+	for (x = min_xp; x < min_xp + bx; x++) { 
+		img[min_yp][x] = 255;
+		img[min_yp + by][x] = 255;
+	}
+	/*for (int y = 0; y < by; y++) {
+		img[min_yp][min_xp + x] = 255;
+		img[min_yp + by][min_xp + x] = 255;
+	}
+	for (int x = 0; x < bx; x++) {
+		img[min_yp + y][min_xp] = 255;
+		img[min_yp + y][min_xp + bx] = 255;
+	}*/
+}
+
+void ex1127_2() {
+	int height, width;
+	int** img = ReadImage((char*)"./TestImages/barbara.png", &height, &width);
+	int bx, by; //블록의 높이, 폭
+	int** block = ReadImage((char*)"./TestImages/barbara_template.png", &by, &bx); //템플릿 이미지
+	int** block_img = (int**)IntAlloc2(by, bx); //블록 이미지
+	int** img_out = (int**)IntAlloc2(height, width);
+
+	/*ReadBlock(img, 0, 0, block_img, by, bx);
+	double mad_min = MAD(block, block_img, by, bx);*/
+	
+	double mad_min = FLT_MAX; //최소값 초기화. 엄청 큰 값
+	int min_yp = 0, min_xp = 0; //최소값의 좌표
+
+	for (int yp = 0; yp <= height-by; yp++) {
+		for (int xp = 0; xp <= width-bx; xp++) {
+			ReadBlock(img, yp, xp, block_img, by, bx);
+			double mad = MAD(block, block_img, by, bx);
+			if (mad < mad_min) { //최소값 갱신
+				mad_min = mad;
+				min_yp = yp;
+				min_xp = xp;
+			}
+		}
+	}
+
+	DrawBox(img, min_yp, min_xp, by, bx); //박스 그리기
+
+	printf("\nMAD(%d, %d) = %f", min_yp, min_xp, mad_min);
+	ImageShow((char*)"input", img, height, width);
+	ImageShow((char*)"output", block_img, by, bx);
+}
+
+#define NUM_IMG 510
+void main() {
+	int height, width;
+	int** img = ReadImage((char*)"./TestImages/lena.png", &height, &width);
+	int** img_out = (int**)IntAlloc2(height, width);
+
+	//얼굴영상 510장 모두 읽기
+	int by, bx;
+	//int** db = (int**)ReadImage((char*)"./db영상(얼굴)/dbs0000.jpg", &by, &bx);
+	int** db[NUM_IMG];
+	/*db[0] = (int**)ReadImage((char*)"./db영상(얼굴)/dbs0000.jpg", &by, &bx);
+	db[1] = (int**)ReadImage((char*)"./db영상(얼굴)/dbs0001.jpg", &by, &bx);
+	...
+	db[509] = (int**)ReadImage((char*)filename, &by, &bx);*/
+
+	for (int n = 0; n < NUM_IMG; n++) {
+		char filename[100];
+		sprintf_s(filename, "./db영상(얼굴)/dbs%04d.jpg", n); //%04d : 4자리 정수로 표현
+		db[n] = (int**)ReadImage(filename, &by, &bx);
+		ImageShow((char*)"db", db[n], by, bx);
+	}
 }
