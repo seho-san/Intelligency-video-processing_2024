@@ -962,7 +962,7 @@ void ex1016_1() {
 int MaskingOne(int y, int x, float** kernel, int** img) {
 	float sum = 0;
 
-	for (int m = -1; m <= 1; m++) {
+	for (int m = -1; m <= 1; m++) { //3x3이기 때문에 <= 써야함
 		for (int n = -1; n <= 1; n++) {
 			sum += img[y + m][x + n] * kernel[m + 1][n + 1]; //마스킹 연산
 		}
@@ -971,8 +971,8 @@ int MaskingOne(int y, int x, float** kernel, int** img) {
 }
 
 void MaskingImage(int height, int width, int** img, float** kernel, int** img_out) {
-	for (int y = 1; y < height - 1; y++) {
-		for (int x = 1; x < width - 1; x++) {
+	for (int y = 1; y < height - 1; y++) { //맨 끝은 제외해야하기 때문에 1부터 시작해서
+		for (int x = 1; x < width - 1; x++) { //맨 끝-1까지만
 			img_out[y][x] = MaskingOne(y, x, kernel, img); //마스킹 연산
 		}
 	}
@@ -996,7 +996,7 @@ void ex1030() {
 
 void MagGradient_X(int** img, int height, int width, int** img_out) {
 	for (int y = 0; y < height; y++) {
-		for (int x = 0; x < width-1; x++) {
+		for (int x = 0; x < width - 1; x++) {
 			img_out[y][x] = abs(img[y][x + 1] - img[y][x]); //x방향 기울기
 		}
 	}
@@ -1097,10 +1097,10 @@ void ex1030_3() {
 	int** img_out = (int**)IntAlloc2(height, width);
 
 	MagGradient_XY(img, height, width, img_out); 
-	
+
 	NormalizeImage(img_out, height, width, img_out);
 
-	ImageShow((char*)"input", img, height, width);
+	ImageShow((char*)"input", img, height, width); 
 	ImageShow((char*)"output", img_out, height, width);
 }
 
@@ -1118,7 +1118,13 @@ void AbsImage(int** img_in, int height, int width, int** img_out) {
 	}
 }
 
-void ex1105_1() { //라플라시안	필터
+//선명화 필터 : 이미지의 선명도를 높이는 필터
+//HPF(High Pass Filter) : 고주파 성분을 강조하는 필터
+//HPF = 원본 이미지 - LPF(원본 이미지)
+//LPF(Low Pass Filter) : 저주파 성분을 강조하는 필터
+//LPF = 원본 이미지 * HPF(원본 이미지)
+
+void ex1105_1() { //라플라시안 필터
 	int height, width;
 	int** img = ReadImage((char*)"./TestImages/lena.png", &height, &width);
 	int** img_out = (int**)IntAlloc2(height, width);
@@ -1168,7 +1174,7 @@ void ex1105_2() { //소벨 필터
 
 	ImageShow((char*)"input", img, height, width);
 	ImageShow((char*)"output", img_out, height, width);
-}
+} 
 
 void MagSobel_X(int** img, int height, int width, int** img_out) {
 	float** kernel = (float**)FloatAlloc2(3, 3);
@@ -1288,7 +1294,7 @@ void ex1106_3() { //선명화 - 3
 	float** kernel = (float**)FloatAlloc2(3, 3);
 
 	ImageShow((char*)"input", img, height, width);
-
+	 
 	for (float alpha = 0.1; alpha <= 1.0, alpha += 0.1;) {
 		GetKernel_S1(alpha, kernel);
 		MaskingImage(height, width, img, kernel, img_out); //마스킹
@@ -1348,17 +1354,17 @@ void ex1106_4(){
 
 void GetBlock3x3(int y, int x, int** img, int* block1D) { //1차원 배열에 3x3 블록 복사
 	int index = 0;
-	for (int m = -1; m <= 1; m++) {
-		for (int n = -1; n <= 1; n++) {
-			block1D[index] = img[y + m][x + n];
+	for (int m = -1; m <= 1; m++) { //블록 y좌표
+		for (int n = -1; n <= 1; n++) { //블록 x좌표
+			block1D[index] = img[y + m][x + n]; //y좌표 : input y좌표 -1,0,1 / x좌표 : input x좌표 -1, 0, 1
 			index++;
 		}
 	}
 }
 
-void MedianFilter3x3(int** img, int height, int width, int** img_out) {
-	for (int y = 1; y < height - 1; y++) {
-		for (int x = 1; x < width - 1; x++) {
+void MedianFilter3x3(int** img, int height, int width, int** img_out) { //중간값 필터
+	for (int y = 1; y < height - 1; y++) { 
+		for (int x = 1; x < width - 1; x++) { //중간값 필터는 테두리를 제외하고 적용
 			int block[9];
 			GetBlock3x3(y, x, img, block);
 			BubbleSort(block, 9);
@@ -1392,7 +1398,7 @@ void ex1112_1() {
 	//중간값 필터 n회 적용
 	//img->img_org copy
 	//img_out -> img copy
-	CopyImage(img, height, width, img_org);
+	CopyImage(img, height, width, img_org); //원본 이미지 저장
 	for (int n = 0; n < 5; n++) {
 		MedianFilter3x3(img, height, width, img_out); //중간값 필터를 다섯 번 적용
 		CopyImage(img_out, height, width, img); //img_out -> img copy
@@ -1406,6 +1412,7 @@ void ex1112_1() {
 }
 
 void MaxFilter3x3(int** img, int height, int width, int** img_out) { //팽창	필터(dilate, dilation 필터)
+	//팽창 필터는 주변 픽셀 중에서 가장 큰 값을 선택
 	for (int y = 1; y < height - 1; y++) {
 		for (int x = 1; x < width - 1; x++) {
 			int block[9];
@@ -1417,6 +1424,7 @@ void MaxFilter3x3(int** img, int height, int width, int** img_out) { //팽창	�
 }
 
 void MinFilter3x3(int** img, int height, int width, int** img_out) { //침식 필터(erde, erosion 필터)
+	//침식 필터는 주변 픽셀 중에서 가장 작은 값을 선택
 	for (int y = 1; y < height - 1; y++) {
 		for (int x = 1; x < width - 1; x++) {
 			int block[9];
@@ -1555,7 +1563,7 @@ void ex1119_2() {
 	ImageShow((char*)"output", img_out_1, half_height/2, half_width/2);
 }
 
-void ex1119_3() {
+void ex1119_3() { //ex1119_2()와 비교해서 MeanFilter3x3() 함수를 추가
 	int height, width;
 	int** img = ReadImage((char*)"./TestImages/zoneplate.png", &height, &width);
 	int half_height = height / 2;
@@ -1576,7 +1584,7 @@ void ex1119_3() {
 	ImageShow((char*)"output", img_out_1, half_height / 2, half_width / 2);
 }
 
-int BilinearInterpolation(float y_f, float x_f, int** img, int height, int width) {
+int BilinearInterpolation(float y_f, float x_f, int** img, int height, int width) { //이미지 확대
 	//예외처리 : 좌표 y_f, x_f가 이미지 범위를 벗어나는 경우 0을 리턴
 	int y = (int)y_f; //정수형으로 변환
 	int x = (int)x_f; //정수형으로 변환
@@ -1587,16 +1595,17 @@ int BilinearInterpolation(float y_f, float x_f, int** img, int height, int width
 		int A = img[y][x];
 		int B = img[y][x + 1];
 		int C = img[y + 1][x];
-		int D = img[y + 1][x + 1];
-		float dx = x_f - x;
-		float dy = y_f - y;
+		int D = img[y + 1][x + 1]; //4개의 픽셀 값
+		float dx = x_f - x; //소수점 부분
+		float dy = y_f - y; //소수점 부분
 
 		int value = (1 - dx) * (1 - dy) * A + dx * (1 - dy) * B + (1 - dx) * dy * C + dx * dy * D + 0.5;
-		return value;
+		//각 픽셀의 가중치를 곱해서 더하기
+		return value;  
 	}
 }
 
-void ex1120_1() {
+void ex1120_1() { //이미지 확대
 	int height, width;
 	int** img = ReadImage((char*)"./TestImages/lena.png", &height, &width);
 	int heightx2 = height * 2;
@@ -1607,13 +1616,13 @@ void ex1120_1() {
 	//int value = BilinearInterpolation(y_f, x_f, img, height, width);
 	for (int yp = 0; yp < heightx2; yp++) {
 		for (int xp = 0; xp < widthx2; xp++) {
-			float y = yp / 2.0;  //0.5, 0.7, 1.2,...
-			float x = xp / 1.5;	 //0.5, 0.7, 1.2,...
+			float y = yp / 2.0;  //0.5, 0.7, 1.2,...//y좌표 2배로 확대
+			float x = xp / 1.5;	  //0.5, 0.7, 1.2,... //x좌표 1.5배로 확대
 			img_out[yp][xp] = BilinearInterpolation(y, x, img, height, width);
 		}
 	}
 	ImageShow((char*)"input", img, height, width);
-	ImageShow((char*)"output", img_out, heightx2, widthx2);
+	ImageShow((char*)"output", img_out, heightx2, widthx2); //x축은 1.5배 확대했기 때문에 오른쪽에 검은색 여백 남음
 }
 
 void ex1120_2() { //원점 기준으로 회전(왼쪽 위 꼭짓점)
@@ -1622,7 +1631,7 @@ void ex1120_2() { //원점 기준으로 회전(왼쪽 위 꼭짓점)
 	int** img_out = (int**)IntAlloc2(height, width);
 
 	double theta = 45.0; //회전각도
-	theta = CV_PI / 180.0 * theta; //degree -> radian
+	theta = CV_PI / 180.0 * theta; //degree -> radian 
 
 	for (int yp = 0; yp < height; yp++) {
 		for (int xp = 0; xp < width; xp++) {
@@ -1655,7 +1664,7 @@ void ex1126_1() { //중심 기준으로 회전
 	for (int yp = 0; yp < height; yp++) {
 		for (int xp = 0; xp < width; xp++) {
 			float x = alpha * ctheta * (xp - cx) + alpha * stheta * (yp - cy) + (cx); //theta : 라디안 값 들어가야 함
-			float y = alpha * -stheta * (xp - cx) + alpha * ctheta * (yp - cy) + cy;
+			float y = alpha * -stheta * (xp - cx) + alpha * ctheta * (yp - cy) + cy; //행렬 계산
 			img_out[yp][xp] = BilinearInterpolation(y, x, img, height, width); //회전
 		}
 	}
@@ -1670,7 +1679,7 @@ void ex1126_2() { //중심 기준으로 회전
 	int** img_out = (int**)IntAlloc2(height, width);
 
 	double a = 1, b = 0, c = 1, d = 1, tx = 0, ty = 0;
-	double det = a * d - b * c;
+	double det = a * d - b * c; 
 	double ap = d / det;
 	double bp = -b / det;
 	double cp = -c / det;
@@ -1688,7 +1697,8 @@ void ex1126_2() { //중심 기준으로 회전
 	ImageShow((char*)"output", img_out, height, width);
 }
 
-double MAD(int** img0, int** img1, int height, int width) { //Mean Absolute Difference
+double MAD(int** img0, int** img1, int height, int width) { //Mean Absolute Difference, 평균 절대 차이
+	//차이의 절대값의 합을 전체 픽셀 수로 나눈 값
 	int sad = 0;
 	for (int y = 0; y < height; y++) {
 		for (int x = 0; x < width; x++) {
@@ -1700,7 +1710,8 @@ double MAD(int** img0, int** img1, int height, int width) { //Mean Absolute Diff
 	return mad;
 }
 
-double MSE(int** img0, int** img1, int height, int width) { //Mean Square Error
+double MSE(int** img0, int** img1, int height, int width) { //Mean Square Error, 평균 제곱 오차
+	//차이의 제곱의 합을 전체 픽셀 수로 나눈 값
 	int sse = 0;
 	for (int y = 0; y < height; y++) {
 		for (int x = 0; x < width; x++) {
@@ -1736,7 +1747,7 @@ void ReadBlock(int** img, int yp, int xp, int** block_img, int by, int bx) {
 	//block_img[1][0] = img[yp+1][xp];
 	//block_img[n][m] = img[yp + n][xp + m]; //n, m은 블록의 높이, 폭
 	//...
-	//block_img[by - 1][bx - 1] = img[yp + by - 1][xp + bx - 1]; //
+	//block_img[by - 1][bx - 1] = img[yp + by - 1][xp + bx - 1]; 
 
 	for (int y = 0; y < by; y++) {
 		for (int x = 0; x < bx; x++) {
@@ -1745,7 +1756,27 @@ void ReadBlock(int** img, int yp, int xp, int** block_img, int by, int bx) {
 	}
 }
 
-void ex1127_1() {
+void WriteBlock(int** img, int yp, int xp, int** block, int by, int bx) { //블록 쓰기
+	//yp, xp는 블록의 시작점
+	//by, bx는 블록의 높이, 폭
+	
+	//block_img[0][0] = img[yp][xp];
+	//block_img[0][1] = img[yp][xp + 1];
+	//block_img[1][0] = img[yp+1][xp];
+	//block_img[n][m] = img[yp + n][xp + m]; //n, m은 블록의 높이, 폭
+	//...
+	//block_img[by - 1][bx - 1] = img[yp + by - 1][xp + bx - 1]; 
+
+	for (int y = 0; y < by; y++) {
+		for (int x = 0; x < bx; x++) {
+			img[yp + y][xp + x] = block[y][x];
+			//이미지의 블록 사이즈 부분과 가장 유사한 블록을 FindBestIndex 함수로 찾아서
+			//WriteBlock 함수로 그 부분을 블록 이미지로 덮어씀
+		}
+	}
+}
+
+void ex1127_1() { //블록 매칭 - 블록 읽기
 	int height, width;
 	int** img = ReadImage((char*)"./TestImages/lena.png", &height, &width);
 	int bx, by; //블록의 높이, 폭
@@ -1763,7 +1794,7 @@ void ex1127_1() {
 	//ImageShow((char*)"output", img_out, height, width);
 }
 
-void DrawBox(int** img, int min_yp, int min_xp, int by, int bx) {
+void DrawBox(int** img, int min_yp, int min_xp, int by, int bx) { //박스 그리기
 	//어차피 blcok의 높이, 폭은 같으므로 by, bx로 대체 가능
 	//시작 좌표도 min_yp, min_xp로 대체 가능
 	//그럼 거기서부터 시작해서 by, bx만큼 그리면 됨
@@ -1788,7 +1819,7 @@ void DrawBox(int** img, int min_yp, int min_xp, int by, int bx) {
 	}*/
 }
 
-void ex1127_2() {
+void ex1127_2() { //블록 매칭 - 가장 비슷한 곳	찾기
 	int height, width;
 	int** img = ReadImage((char*)"./TestImages/barbara.png", &height, &width);
 	int bx, by; //블록의 높이, 폭
@@ -1804,7 +1835,7 @@ void ex1127_2() {
 
 	for (int yp = 0; yp <= height-by; yp++) {
 		for (int xp = 0; xp <= width-bx; xp++) {
-			ReadBlock(img, yp, xp, block_img, by, bx);
+			ReadBlock(img, yp, xp, block_img, by, bx); //(yp, xp에서 블록 읽기), (by, bx만큼), block_img에 저장
 			double mad = MAD(block, block_img, by, bx);
 			if (mad < mad_min) { //최소값 갱신
 				mad_min = mad;
@@ -1822,24 +1853,138 @@ void ex1127_2() {
 }
 
 #define NUM_IMG 510
-void main() {
+
+void ReadDBImages(int*** db, int* pointer_by, int* pointer_bx) { //int*** db = int** db[]
+	for (int n = 0; n < NUM_IMG; n++) {
+		char filename[100];
+		sprintf_s(filename, "./db영상(얼굴)/dbs%04d.jpg", n); //%04d : 4자리 정수로 표현, n은 0000부터 0509까지
+		db[n] = (int**)ReadImage(filename, pointer_by, pointer_bx); //이미지 510장 읽기
+		//pointer_by, pointer_bx : 높이, 폭
+		//ImageShow((char*)"db", db[n], *pointer_by, *pointer_bx); //*pointer_by, *pointer_bx : 주소값 전달해야해서 *붙임
+	}
+}
+
+typedef int** INT2;
+
+void ex1203_1() { //얼굴영상 510장 모두 읽기
 	int height, width;
 	int** img = ReadImage((char*)"./TestImages/lena.png", &height, &width);
 	int** img_out = (int**)IntAlloc2(height, width);
 
 	//얼굴영상 510장 모두 읽기
 	int by, bx;
-	//int** db = (int**)ReadImage((char*)"./db영상(얼굴)/dbs0000.jpg", &by, &bx);
-	int** db[NUM_IMG];
+	//int** db = (int**)ReadImage((char*)"./db영상(얼굴)/dbs0000.jpg", &by, &bx); //이미지 1장
+	INT2 db[NUM_IMG]; //이미지 510장
+	
 	/*db[0] = (int**)ReadImage((char*)"./db영상(얼굴)/dbs0000.jpg", &by, &bx);
 	db[1] = (int**)ReadImage((char*)"./db영상(얼굴)/dbs0001.jpg", &by, &bx);
 	...
 	db[509] = (int**)ReadImage((char*)filename, &by, &bx);*/
 
-	for (int n = 0; n < NUM_IMG; n++) {
-		char filename[100];
-		sprintf_s(filename, "./db영상(얼굴)/dbs%04d.jpg", n); //%04d : 4자리 정수로 표현
-		db[n] = (int**)ReadImage(filename, &by, &bx);
-		ImageShow((char*)"db", db[n], by, bx);
+	//INT2* db = (INT2*)mallic(sizeof(INT2) * NUM_IMG); //C에서는 malloc 사용
+	//INT* db = new INT2[NUM_IMG]; //C++에서는 new 사용
+
+	ReadDBImages(db, &by, &bx); //포인터 전달해야해서 &붙임
+
+	//delete[] db; //메모리 해제(C++)
+	//free(db); //메모리 해제(C)
+}
+
+int FindBestIndex(int ** block, int*** db, int num, int by, int bx) {
+	float mad_min = FLT_MAX; //최소값 초기화. 엄청 큰 값
+	int index; //최소값의 인덱스
+
+	//double mad =  MAD(block, db[0], by, bx); //db[0] : 0번째 이미지와 비교
+	//if (mad < mad_min) {
+	//	mad_min = mad;
+	//	index = 0;
+	//}
+
+	//mad = MAD(block, db[1], by, bx); //db[1] : 1번째 이미지와 비교
+	//if (mad < mad_min) {
+	//	mad_min = mad;
+	//	index = 1;
+	//}
+	//...
+	for (int n = 0; n < num; n++) {
+		double mad = MAD(block, db[n], by, bx);
+		if (mad < mad_min) {
+			mad_min = mad;
+			index = n;
+		}
 	}
+	return index;
+}
+
+void ex1203_2() { //db이미지 중 가장 유사한 이미지로 대체해서 모자이크 영상 만들기
+	int height, width;
+	int** img = ReadImage((char*)"./TestImages/lena.png", &height, &width);
+	int** img_out = (int**)IntAlloc2(height, width);
+
+	int by, bx;
+	INT2 db[NUM_IMG]; //이미지 510장
+	
+	ReadDBImages(db, &by, &bx); //포인터 전달해야해서 &붙임
+
+	int** block = (int**)IntAlloc2(by, bx); 
+
+	for (int y = 0; y < height; y += by) {
+		for (int x = 0; x < width; x += bx) {
+			ReadBlock(img, y, x, block, by, bx); //블록이미지 ReadDBImages에서 읽어옴
+			int index = FindBestIndex(block, db, NUM_IMG, by, bx); //가장 유사한 이미지 찾기
+			WriteBlock(img_out, y, x, db[index], by, bx); //db이미지 중 가장 유사한 이미지로 대체해서 모자이크 영상 만들기
+		}
+	}
+	ImageShow((char*)"input", img, height, width);
+	ImageShow((char*)"output", img_out, height, width);
+	IntFree2(block, by, bx);
+}
+
+void ex1208_1() { //db이미지 중 가장 유사한 이미지로 대체해서 모자이크 영상 만들기 - db이미지 사이즈 절반(16x16)
+	int height, width;
+	int** img = ReadImage((char*)"./TestImages/lena.png", &height, &width);
+	int** img_out = (int**)IntAlloc2(height, width);
+
+	int by, bx;
+	INT2* db=(INT2*)malloc(sizeof(INT2)*NUM_IMG); //C에서는 malloc 사용
+	//INT2* db = new INT2[NUM_IMG]; 
+
+	ReadDBImages(db, &by, &bx); //포인터 전달해야해서 &붙임
+
+	INT2* smalldb=(INT2*)malloc(sizeof(INT2*)*NUM_IMG); //C에서는 malloc 사용
+	//int*** smalldb = new INT2[NUM_IMG]; //INT2* smalldb[NUM_IMG]; 
+	int sbx = bx / 2, sby = by / 2;
+
+	for (int n = 0; n < NUM_IMG; n++) {
+		smalldb[n] = (int**)IntAlloc2(by / 2, bx / 2);
+	}
+
+	for (int n = 0; n < NUM_IMG; n++) {
+		DownSamplingX2(db[n], by, bx, smalldb[n]); //db이미지 사이즈 절반(16x16)
+	}
+		
+	int** block = (int**)IntAlloc2(sby, sbx); //block 사이즈도 절반으로 줄임
+
+	for (int y = 0; y < height; y += sby) {
+		for (int x = 0; x < width; x += sbx) {
+			ReadBlock(img, y, x, block, sby, sbx); //블록이미지 ReadDBImages에서 읽어옴
+			int index = FindBestIndex(block, smalldb, NUM_IMG, sby, sbx); //가장 유사한 이미지 찾기
+			WriteBlock(img_out, y, x, smalldb[index], sby, sbx); //db이미지 중 가장 유사한 이미지로 대체해서 모자이크 영상 만들기
+		}
+	}
+	ImageShow((char*)"input", img, height, width);
+	ImageShow((char*)"output", img_out, height, width);
+
+	IntFree2(block, sby, sbx);
+	for (int n = 0; n < NUM_IMG; n++) { //메모리 해제
+		IntFree2(db[n], by, bx);
+		IntFree2(smalldb[n], sby, sbx); 
+	}
+
+	free(db); //메모리 해제(C) //C++ : delete[] db;
+	free(smalldb); //메모리 해제(C) //C++ : delete[] smalldb;
+}
+
+void main() {
+	ex1120_1();
 }
